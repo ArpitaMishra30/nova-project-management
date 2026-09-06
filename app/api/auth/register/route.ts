@@ -1,0 +1,3 @@
+import {NextResponse} from 'next/server';import {z} from 'zod';import {db} from '@/lib/db';import {setSession} from '@/lib/auth';import bcrypt from 'bcryptjs';
+const schema=z.object({name:z.string().min(2),email:z.string().email(),password:z.string().min(6)});
+export async function POST(req:Request){try{const b=schema.parse(await req.json());const email=b.email.toLowerCase();if(await db.user.findUnique({where:{email}}))return NextResponse.json({error:'Email already registered'},{status:409});const user=await db.user.create({data:{name:b.name,email,passwordHash:await bcrypt.hash(b.password,12)}});await setSession(user.id);return NextResponse.json({ok:true},{status:201})}catch{return NextResponse.json({error:'Invalid request'},{status:400})}}

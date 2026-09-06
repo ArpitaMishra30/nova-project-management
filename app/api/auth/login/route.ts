@@ -1,0 +1,3 @@
+import {NextResponse} from 'next/server';import {z} from 'zod';import {db} from '@/lib/db';import {setSession} from '@/lib/auth';import bcrypt from 'bcryptjs';
+const schema=z.object({email:z.string().email(),password:z.string().min(1)});
+export async function POST(req:Request){try{const body=schema.parse(await req.json());const user=await db.user.findUnique({where:{email:body.email.toLowerCase()}});if(!user||!(await bcrypt.compare(body.password,user.passwordHash)))return NextResponse.json({error:'Invalid email or password'},{status:401});await setSession(user.id);return NextResponse.json({ok:true,user:{id:user.id,name:user.name,email:user.email}})}catch{return NextResponse.json({error:'Invalid request'},{status:400})}}
